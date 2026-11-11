@@ -5,244 +5,263 @@ from prettytable import PrettyTable
 import inquirer
 from colorama import init, Fore, Style
 
-init(autoreset=True)
+init()
 
-def generate_booking_code(existing_codes):
-    chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-    code = "TKT-" + "".join(random.choice(chars) for _ in range(6))
-    if code in existing_codes:
-        return generate_booking_code(existing_codes)
-    return code
+ABU = Fore.LIGHTBLACK_EX
+HIJAU = Fore.GREEN
+RESET = Style.RESET_ALL
 
-def render_seat_map(kapasitas, occupied_seats):
-    print(f"\n{Fore.CYAN}  [ LAYAR CINEMA ]  {Style.RESET_ALL}")
-    print("--------------------")
-    rows = "ABCDEFGH"
-    row_count = (kapasitas // 4) + (1 if kapasitas % 4 != 0 else 0)
-    
-    available_seats = []
-    seat_idx = 0
-    for r in range(row_count):
-        row_str = f"{rows[r]} | "
-        for c in range(1, 5):
-            seat_idx += 1
-            if seat_idx > kapasitas:
+HURUF_BARIS = "ABCDEFGH"
+KURSI_PER_BARIS = 4
+
+
+def tampilkan_header(judul):
+    print()
+    print("========================================")
+    print(judul.upper().center(40))
+    print("========================================")
+
+
+def buat_kode_booking(kode_lama):
+    karakter = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    while True:
+        acak = ""
+        for urutan in range(6):
+            acak = acak + random.choice(karakter)
+        kode = "TKT-" + acak
+        if kode not in kode_lama:
+            return kode
+
+
+def tampilkan_kursi(kapasitas, kursi_terisi):
+    tampilkan_header("Layar Cinema")
+
+    kursi_kosong = []
+    kursi_ke = 0
+    jumlah_baris = -(-kapasitas // KURSI_PER_BARIS)
+
+    for indeks_baris in range(jumlah_baris):
+        huruf_baris = HURUF_BARIS[indeks_baris]
+        teks_baris = huruf_baris + " | "
+        for nomor_kursi in range(1, KURSI_PER_BARIS + 1):
+            kursi_ke = kursi_ke + 1
+            if kursi_ke > kapasitas:
                 break
-            seat_code = f"{rows[r]}{c}"
-            if seat_code in occupied_seats:
-                # Poin 9: Kursi terisi berwarna abu-abu dengan simbol [X]
-                row_str += f"{Fore.LIGHTBLACK_EX}[X]{Style.RESET_ALL} "
+            kode_kursi = huruf_baris + str(nomor_kursi)
+            if kode_kursi in kursi_terisi:
+                teks_baris = teks_baris + ABU + "[X]" + RESET + " "
             else:
-                # Kursi kosong berwarna hijau
-                row_str += f"{Fore.GREEN}[{seat_code}]{Style.RESET_ALL} "
-                available_seats.append(seat_code)
-        print(row_str)
-    return available_seats
+                teks_baris = teks_baris + HIJAU + "[" + kode_kursi + "]" + RESET + " "
+                kursi_kosong.append(kode_kursi)
+        print(teks_baris)
+    return kursi_kosong
+
+
+def tampilkan_error(pesan):
+    print("[!]", pesan)
+
+
+def input_kursi(kursi_terisi, kursi_kosong, pertanyaan):
+    while True:
+        print()
+        kursi = input(pertanyaan).strip().upper()
+        if kursi == "BATAL":
+            return None
+        if kursi in kursi_terisi:
+            tampilkan_error("Kursi sudah terisi. Pilih yang berwarna hijau.")
+        elif kursi not in kursi_kosong:
+            tampilkan_error("Kode kursi tidak valid.")
+        else:
+            return kursi
+
+
+def tampilkan_tabel_pesanan(daftar_pesanan):
+    tabel = PrettyTable()
+    tabel.field_names = ["No", "Kode Booking", "Judul Film", "Jadwal", "Kursi", "Status"]
+    nomor = 1
+    for pesanan in daftar_pesanan:
+        tabel.add_row([nomor, pesanan["booking_code"], pesanan["judul"],
+                       pesanan["jadwal"], pesanan["kursi"], pesanan["status"]])
+        nomor = nomor + 1
+    print(tabel)
+
+
+def pilih_pesanan_pending(username, judul_menu, pertanyaan):
+    semua_transaksi = load_excel(TRANSACTIONS_FILE)
+
+    daftar_pending = []
+    for transaksi in semua_transaksi:
+        if str(transaksi["username"]) == str(username) and transaksi["status"] == "Pending":
+            daftar_pending.append(transaksi)
+
+    if len(daftar_pending) == 0:
+        print("[!] Tidak ada pesanan berstatus Pending.")
+        return None, None
+
+    tampilkan_header(judul_menu)
+    tampilkan_tabel_pesanan(daftar_pending)
+
+    pilihan_menu = []
+    for pesanan in daftar_pending:
+        pilihan_menu.append(pesanan["booking_code"] + " - " + pesanan["judul"])
+    pilihan_menu.append("Batal")
+
+    jawaban = inquirer.prompt([
+        inquirer.List("pesanan", message=pertanyaan, choices=pilihan_menu)
+    ])
+    if not jawaban or jawaban["pesanan"] == "Batal":
+        return None, None
+
+    kode_dipilih = jawaban["pesanan"].split(" - ")[0]
+    for pesanan in daftar_pending:
+        if pesanan["booking_code"] == kode_dipilih:
+            return semua_transaksi, pesanan
+
+
+def cari_film(daftar_film, id_film):
+    for film in daftar_film:
+        if film["movie_id"] == id_film:
+            return film
+    return None
+
 
 def make_reservation(username, pre_selected_movie_id=None):
-    movies = load_excel(MOVIES_FILE)
-    transactions = load_excel(TRANSACTIONS_FILE)
-    
-    print("\n=== RESERVASI TIKET BIOSKOP ===")
-    
-    while True:
+    daftar_film = load_excel(MOVIES_FILE)
+    semua_transaksi = load_excel(TRANSACTIONS_FILE)
+
+    tampilkan_header("Reservasi Tiket Bioskop")
+
+    film = None
+    while film is None:
         if pre_selected_movie_id:
-            movie_id = pre_selected_movie_id
-            pre_selected_movie_id = None 
+            id_film = pre_selected_movie_id
+            pre_selected_movie_id = None
         else:
-            movie_id = input("Masukkan ID Film yang ingin dipesan (atau ketik 'batal'): ").strip().upper()
-            if movie_id == 'BATAL':
+            id_film = input("Masukkan ID Film (atau 'batal'): ").strip().upper()
+            if id_film == "BATAL":
                 return
-                
-        selected_movie = next((m for m in movies if m["movie_id"] == movie_id), None)
-        if selected_movie:
-            break
-        print(f"{Fore.RED}[!] Error: ID Film tidak ditemukan.{Style.RESET_ALL}")
+        film = cari_film(daftar_film, id_film)
+        if film is None:
+            tampilkan_error("ID Film tidak ditemukan.")
 
-    jadwal_list = [j.strip() for j in str(selected_movie["jadwal"]).split(",")]
-    print(f"\nJadwal Tayang {selected_movie['judul']}:")
-    for idx, j in enumerate(jadwal_list, 1):
-        print(f"{idx}. {j}")
-        
-    while True: 
-        j_input = input("Pilih Nomor Jadwal (atau ketik 'batal'): ").strip()
-        if j_input.lower() == 'batal':
+    daftar_jadwal = []
+    for jam in str(film["jadwal"]).split(","):
+        daftar_jadwal.append(jam.strip())
+
+    tampilkan_header("Jadwal Tayang " + film["judul"])
+    nomor = 1
+    for jam in daftar_jadwal:
+        print(str(nomor) + ".", jam)
+        nomor = nomor + 1
+
+    while True:
+        input_jadwal = input("Pilih nomor jadwal (atau 'batal'): ").strip()
+        if input_jadwal.lower() == "batal":
             return
-        try:
-            j_choice = int(j_input) - 1
-            if 0 <= j_choice < len(jadwal_list):
-                jadwal = jadwal_list[j_choice]
-                break
-            print(f"{Fore.RED}[!] Nomor jadwal tidak ada dalam daftar.{Style.RESET_ALL}")
-        except ValueError:
-            print(f"{Fore.RED}[!] Harap masukkan angka yang valid!{Style.RESET_ALL}")
+        if input_jadwal.isdigit() and 1 <= int(input_jadwal) <= len(daftar_jadwal):
+            jadwal = daftar_jadwal[int(input_jadwal) - 1]
+            break
+        tampilkan_error("Masukkan nomor jadwal yang ada di daftar.")
 
-    occupied_seats = [
-        t["kursi"] for t in transactions
-        if t["movie_id"] == movie_id and t["jadwal"] == jadwal and t["status"] != "Batal"
-    ]
-    
-    available_seats = render_seat_map(int(selected_movie["kapasitas"]), occupied_seats)
-    
-    if not available_seats:
-        print(f"{Fore.RED}[!] Maaf, semua kursi untuk jadwal ini sudah penuh!{Style.RESET_ALL}")
+    kursi_terisi = []
+    for transaksi in semua_transaksi:
+        if (transaksi["movie_id"] == id_film
+                and transaksi["jadwal"] == jadwal
+                and transaksi["status"] != "Batal"):
+            kursi_terisi.append(transaksi["kursi"])
+
+    kursi_kosong = tampilkan_kursi(int(film["kapasitas"]), kursi_terisi)
+    if len(kursi_kosong) == 0:
+        tampilkan_error("Maaf, semua kursi untuk jadwal ini sudah penuh.")
         return
 
-    while True:
-        pilih_kursi = input("\nMasukkan Kode Kursi pilihan Anda (contoh: A1, atau ketik 'batal'): ").strip().upper()
-        if pilih_kursi == 'BATAL':
-            return
-        if pilih_kursi in occupied_seats:
-            print(f"{Fore.RED}[!] Kursi {pilih_kursi} sudah terisi ([X]). Silakan pilih kursi lain yang berwarna hijau.{Style.RESET_ALL}")
-        elif pilih_kursi not in available_seats:
-            print(f"{Fore.RED}[!] Kode kursi tidak valid atau diluar kapasitas studio.{Style.RESET_ALL}")
-        else:
-            break
+    kursi = input_kursi(kursi_terisi, kursi_kosong,
+                        "Masukkan kode kursi (contoh: A1, atau 'batal'): ")
+    if kursi is None:
+        return
 
-    existing_codes = {t["booking_code"] for t in transactions}
-    booking_code = generate_booking_code(existing_codes)
-    now_str = datetime.now().strftime("%d-%m-%Y %H:%M")
-    
-    transactions.append({
-        "booking_code": booking_code,
+    kode_lama = []
+    for transaksi in semua_transaksi:
+        kode_lama.append(transaksi["booking_code"])
+    kode_booking = buat_kode_booking(kode_lama)
+
+    semua_transaksi.append({
+        "booking_code": kode_booking,
         "username": username,
-        "movie_id": movie_id,
-        "judul": selected_movie["judul"],
+        "movie_id": id_film,
+        "judul": film["judul"],
         "jadwal": jadwal,
-        "kursi": pilih_kursi,
-        "harga": selected_movie["harga"],
+        "kursi": kursi,
+        "harga": film["harga"],
         "status": "Pending",
-        "tanggal": now_str
+        "tanggal": datetime.now().strftime("%d-%m-%Y %H:%M"),
     })
-    
-    save_excel(TRANSACTIONS_FILE, transactions)
-    print(f"\n{Fore.GREEN}[Sukses] Reservasi Berhasil dibuat!{Style.RESET_ALL}")
-    print(f"Kode Booking Anda : {booking_code}")
-    print("Status Pembayaran : Pending (Silakan konfirmasi pembayaran ke Admin)")
+    save_excel(TRANSACTIONS_FILE, semua_transaksi)
+
+    print()
+    print("[Sukses] Reservasi berhasil dibuat!")
+    print("Kode Booking      :", kode_booking)
+    print("Status Pembayaran : Pending (konfirmasi pembayaran ke Admin)")
+
 
 def view_customer_history(username):
-    transactions = load_excel(TRANSACTIONS_FILE)
-    user_tx = [t for t in transactions if t["username"] == username]
-    
-    print("\n=== RIWAYAT TIKET PESANAN SAYA ===")
-    if not user_tx:
+    semua_transaksi = load_excel(TRANSACTIONS_FILE)
+
+    riwayat_user = []
+    for transaksi in semua_transaksi:
+        if str(transaksi["username"]) == str(username):
+            riwayat_user.append(transaksi)
+
+    tampilkan_header("Riwayat Tiket Saya")
+    if len(riwayat_user) == 0:
         print("Belum ada riwayat pemesanan tiket.")
         return
-        
-    table = PrettyTable()
-    table.field_names = ["Kode Booking", "Judul Film", "Jadwal", "Kursi", "Total Bayar", "Status", "Tanggal"]
-    for t in user_tx:
-        table.add_row([
-            t["booking_code"], t["judul"], t["jadwal"], t["kursi"], 
-            f"Rp{int(t['harga']):,}", t["status"], t["tanggal"]
-        ])
-    print(table)
+
+    tabel = PrettyTable()
+    tabel.field_names = ["Kode Booking", "Judul Film", "Jadwal", "Kursi",
+                         "Total Bayar", "Status", "Tanggal"]
+    for transaksi in riwayat_user:
+        harga = "Rp" + format(int(transaksi["harga"]), ",")
+        tabel.add_row([transaksi["booking_code"], transaksi["judul"],
+                       transaksi["jadwal"], transaksi["kursi"], harga,
+                       transaksi["status"], transaksi["tanggal"]])
+    print(tabel)
+
 
 def change_seat_choice(username):
-    transactions = load_excel(TRANSACTIONS_FILE)
-    pending_tx = [t for t in transactions if t["username"] == username and t["status"] == "Pending"]
-    
-    if not pending_tx:
-        print(f"{Fore.YELLOW}[!] Tidak ada pesanan berstatus 'Pending' yang dapat diubah kursinya.{Style.RESET_ALL}")
+    semua_transaksi, pesanan = pilih_pesanan_pending(
+        username, "Tukar Kursi (Belum Dibayar)",
+        "Pilih pesanan yang kursinya mau diganti:")
+    if pesanan is None:
         return
-        
-    print("\n=== TUKAR PILIHAN KURSI (BELUM DIBAYAR) ===")
-    
-    # Menampilkan tabel/daftar pesanan pending user secara jelas terlebih dahulu
-    table = PrettyTable()
-    table.field_names = ["No", "Kode Booking", "Judul Film", "Jadwal", "Kursi", "Status"]
-    for idx, t in enumerate(pending_tx, 1):
-        table.add_row([idx, t['booking_code'], t['judul'], t['jadwal'], t['kursi'], t['status']])
-    print(table)
-    
-    booking_choices = [
-        f"{t['booking_code']} - {t['judul']} (Kursi: {t['kursi']})" for t in pending_tx
-    ]
-    booking_choices.append("Batal")
-    
-    questions = [
-        inquirer.List(
-            'booking',
-            message="Pilih pesanan yang ingin diubah kursinya:",
-            choices=booking_choices,
-        ),
-    ]
-    answer = inquirer.prompt(questions)
-    if not answer or answer['booking'] == "Batal":
+
+    film = cari_film(load_excel(MOVIES_FILE), pesanan["movie_id"])
+
+    kursi_terisi = []
+    for transaksi in semua_transaksi:
+        if (transaksi["movie_id"] == pesanan["movie_id"]
+                and transaksi["jadwal"] == pesanan["jadwal"]
+                and transaksi["status"] != "Batal"
+                and transaksi["booking_code"] != pesanan["booking_code"]):
+            kursi_terisi.append(transaksi["kursi"])
+
+    kursi_kosong = tampilkan_kursi(int(film["kapasitas"]), kursi_terisi)
+    kursi_baru = input_kursi(kursi_terisi, kursi_kosong,
+                             "Masukkan kode kursi baru (atau 'batal'): ")
+    if kursi_baru is None:
         return
-        
-    code_choice = answer['booking'].split(" - ")[0]
-    selected_tx = next((t for t in pending_tx if t["booking_code"] == code_choice), None)
-        
-    movies = load_excel(MOVIES_FILE)
-    movie_info = next((m for m in movies if m["movie_id"] == selected_tx["movie_id"]), {})
-    
-    occupied = [
-        t["kursi"] for t in transactions
-        if t["movie_id"] == selected_tx["movie_id"] and t["jadwal"] == selected_tx["jadwal"] 
-        and t["status"] != "Batal" and t["booking_code"] != code_choice
-    ]
-    
-    available_seats = render_seat_map(int(movie_info.get("kapasitas", 12)), occupied)
-    
-    while True:
-        kursi_baru = input("\nMasukkan Kode Kursi Baru pilihan Anda (atau 'batal'): ").strip().upper()
-        if kursi_baru == 'BATAL':
-            return
-        if kursi_baru in occupied:
-            print(f"{Fore.RED}[!] Kursi tersebut sudah terisi! Pilih kursi lain yang berwarna hijau.{Style.RESET_ALL}")
-        elif kursi_baru not in available_seats:
-            print(f"{Fore.RED}[!] Kode kursi tidak valid.{Style.RESET_ALL}")
-        else:
-            break
-        
-    for t in transactions:
-        if t["booking_code"] == code_choice:
-            t["kursi"] = kursi_baru
-            break
-            
-    save_excel(TRANSACTIONS_FILE, transactions)
-    print(f"{Fore.GREEN}[Sukses] Kursi berhasil ditukar menjadi {kursi_baru}!{Style.RESET_ALL}")
+
+    pesanan["kursi"] = kursi_baru
+    save_excel(TRANSACTIONS_FILE, semua_transaksi)
+    print("[Sukses] Kursi berhasil diganti menjadi", kursi_baru)
+
 
 def cancel_reservation(username):
-    transactions = load_excel(TRANSACTIONS_FILE)
-    pending_tx = [t for t in transactions if t["username"] == username and t["status"] == "Pending"]
-    
-    if not pending_tx:
-        print(f"{Fore.YELLOW}[!] Tidak ada pesanan berstatus 'Pending' yang dapat dibatalkan.{Style.RESET_ALL}")
+    semua_transaksi, pesanan = pilih_pesanan_pending(
+        username, "Batalkan Pesanan", "Pilih pesanan yang mau dibatalkan:")
+    if pesanan is None:
         return
-        
-    print("\n=== BATALKAN PESANAN TIKET ===")
-    
-    # Menampilkan tabel/daftar pesanan pending user secara jelas terlebih dahulu
-    table = PrettyTable()
-    table.field_names = ["No", "Kode Booking", "Judul Film", "Jadwal", "Kursi", "Status"]
-    for idx, t in enumerate(pending_tx, 1):
-        table.add_row([idx, t['booking_code'], t['judul'], t['jadwal'], t['kursi'], t['status']])
-    print(table)
-    
-    booking_choices = [
-        f"{t['booking_code']} - {t['judul']} [Kursi {t['kursi']}]" for t in pending_tx
-    ]
-    booking_choices.append("Batal")
-    
-    questions = [
-        inquirer.List(
-            'booking',
-            message="Pilih pesanan yang ingin dibatalkan:",
-            choices=booking_choices,
-        ),
-    ]
-    answer = inquirer.prompt(questions)
-    if not answer or answer['booking'] == "Batal":
-        return
-        
-    code_choice = answer['booking'].split(" - ")[0]
-    
-    for t in transactions:
-        if t["booking_code"] == code_choice and t["username"] == username and t["status"] == "Pending":
-            t["status"] = "Batal"
-            break
-            
-    save_excel(TRANSACTIONS_FILE, transactions)
-    print(f"{Fore.GREEN}[Sukses] Pesanan {code_choice} berhasil dibatalkan!{Style.RESET_ALL}")
+
+    pesanan["status"] = "Batal"
+    save_excel(TRANSACTIONS_FILE, semua_transaksi)
+    print("[Sukses] Pesanan", pesanan["booking_code"], "dibatalkan.")
