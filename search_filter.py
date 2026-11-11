@@ -25,9 +25,9 @@ def search_and_filter_movies(current_user=None):
             keyword = input("Masukkan kata kunci judul (atau ketik 'batal'): ").strip().lower()
             if keyword == 'batal':
                 continue
-            filtered = [m for m in movies if keyword in str(m["judul"]).lower()]
+            filtered = [film for film in movies if keyword in str(film["judul"]).lower()]
         elif pilihan == "2":
-            genres = list({m["genre"] for m in movies})
+            genres = list({film["genre"] for film in movies})
             print("\nDaftar Genre Tersedia:")
             for idx, g in enumerate(genres, 1):
                 print(f"{idx}. {g}")
@@ -78,7 +78,7 @@ def search_and_filter_movies(current_user=None):
                 if m_id == 'BATAL':
                     break
                 
-                selected_movie = next((m for m in filtered if m["movie_id"] == m_id), None)
+                selected_movie = next((film for film in filtered if film["movie_id"] == m_id), None)
                 if selected_movie:
                     print(f"\n--- DETAIL FILM: {selected_movie['judul']} ---")
                     print(f"Genre    : {selected_movie['genre']}")
