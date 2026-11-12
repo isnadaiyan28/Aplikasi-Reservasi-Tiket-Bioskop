@@ -3,132 +3,161 @@ from prettytable import PrettyTable
 import customer_features
 from colorama import init, Fore, Style
 
-init(autoreset=True)
+init()
 
-def search_and_filter_movies(current_user=None):
-    movies = load_excel(MOVIES_FILE)
-    if not movies:
-        print(f"{Fore.YELLOW}Belum ada film yang sedang tayang.{Style.RESET_ALL}")
-        return current_user
+KUNING = Fore.YELLOW
+MERAH = Fore.RED
+RESET = Style.RESET_ALL
+
+
+def tampilkan_header(judul):
+    print()
+    print("========================================")
+    print(judul.upper().center(40))
+    print("========================================")
+
+
+def tampilkan_error(pesan):
+    print(MERAH + "[!] " + pesan + RESET)
+
+
+def tanya_ya_tidak(pertanyaan):
+    while True:
+        jawaban = input(pertanyaan).strip().lower()
+        if jawaban == "y" or jawaban == "n":
+            return jawaban
+        tampilkan_error("Tolong ketik 'y' untuk ya, atau 'n' untuk tidak, ya.")
+
+
+def tampilkan_tabel_film(daftar_film):
+    tabel = PrettyTable()
+    tabel.field_names = ["ID Film", "Judul Film", "Genre", "Studio", "Harga (Rp)", "Jadwal Tayang"]
+    for film in daftar_film:
+        harga_format = format(int(film["harga"]), ",")
+        tabel.add_row([film["movie_id"], film["judul"], film["genre"], 
+                       film["studio"], harga_format, film["jadwal"]])
+    print(tabel)
+
+
+def search_and_filter_movies(pengguna_saat_ini=None):
+    daftar_film = load_excel(MOVIES_FILE)
+    if len(daftar_film) == 0:
+        print(KUNING + "Yah, sayang sekali belum ada film yang sedang tayang saat ini." + RESET)
+        return pengguna_saat_ini
 
     while True:
-        print("\n=== PENCARIAN & FILTER FILM ===")
-        print("1. Cari Berdasarkan Judul")
-        print("2. Filter Berdasarkan Genre")
-        print("3. Tampilkan Semua Film")
-        print("4. Kembali ke Menu Utama")
+        tampilkan_header("Pencarian & Filter Film")
+        print("1. Cari judul film")
+        print("2. Pilih berdasarkan genre")
+        print("3. Lihat semua film yang tayang")
+        print("4. Kembali ke halaman utama")
         
-        pilihan = input("Pilih Menu (1-4): ").strip()
+        pilihan = input("Mau pilih menu nomor berapa? (1-4): ").strip()
 
-        filtered = []
+        hasil_filter = []
         if pilihan == "1":
-            keyword = input("Masukkan kata kunci judul (atau ketik 'batal'): ").strip().lower()
-            if keyword == 'batal':
+            kata_kunci = input("Ketik judul film yang dicari (atau ketik 'batal' untuk kembali): ").strip().lower()
+            if kata_kunci == "batal":
                 continue
-            filtered = [film for film in movies if keyword in str(film["judul"]).lower()]
+            
+            for film in daftar_film:
+                if kata_kunci in str(film["judul"]).lower():
+                    hasil_filter.append(film)
+
         elif pilihan == "2":
-            genres = list({film["genre"] for film in movies})
+            daftar_genre = []
+            for film in daftar_film:
+                genre = film["genre"]
+                if genre not in daftar_genre:
+                    daftar_genre.append(genre)
+            
             print("\nDaftar Genre Tersedia:")
-            for idx, g in enumerate(genres, 1):
-                print(f"{idx}. {g}")
+            nomor = 1
+            for genre in daftar_genre:
+                print(str(nomor) + ".", genre)
+                nomor = nomor + 1
             
             while True:
-                g_input = input("Pilih Nomor Genre (atau ketik 'batal'): ").strip()
-                if g_input.lower() == 'batal':
-                    filtered = None
+                input_genre = input("Pilih nomor genre yang kamu suka (atau ketik 'batal'): ").strip()
+                if input_genre.lower() == "batal":
+                    hasil_filter = None
                     break
-                try:
-                    g_idx = int(g_input) - 1
-                    if 0 <= g_idx < len(genres):
-                        selected_genre = genres[g_idx]
-                        filtered = [m for m in movies if str(m["genre"]).lower() == selected_genre.lower()]
-                        break
-                    else:
-                        print(f"{Fore.RED}[!] Nomor genre tidak ada dalam daftar.{Style.RESET_ALL}")
-                except ValueError:
-                    print(f"{Fore.RED}[!] Error: Harap masukkan angka yang valid!{Style.RESET_ALL}")
-            if filtered is None:
+                
+                if input_genre.isdigit() and 1 <= int(input_genre) <= len(daftar_genre):
+                    genre_dipilih = daftar_genre[int(input_genre) - 1]
+                    for film in daftar_film:
+                        if str(film["genre"]).lower() == genre_dipilih.lower():
+                            hasil_filter.append(film)
+                    break
+                else:
+                    tampilkan_error("Duh, nomor genrenya nggak ada di daftar. Coba cek lagi ya.")
+            
+            if hasil_filter is None:
                 continue
+
         elif pilihan == "3":
-            filtered = movies
+            hasil_filter = daftar_film
+
         elif pilihan == "4":
             break
+
         else:
-            print(f"{Fore.RED}[!] Pilihan tidak valid. Harap masukkan angka 1 sampai 4.{Style.RESET_ALL}")
+            tampilkan_error("Hmm, pilihannya cuma dari angka 1 sampai 4 aja nih. Yuk coba lagi.")
             continue
 
-        # Poin 3: Jika film tidak ditemukan, beri opsi cari lagi
-        if not filtered:
-            print(f"\n{Fore.YELLOW}[!] Film yang Anda cari tidak ditemukan.{Style.RESET_ALL}")
-            while True:
-                sub_pilih = input("Apakah ingin mencoba mencari lagi? (y/n): ").strip().lower()
-                if sub_pilih in ['y', 'n']:
-                    break
-                print(f"{Fore.RED}[!] Masukkan pilihan yang valid ('y' atau 'n').{Style.RESET_ALL}")
-            if sub_pilih == 'y':
+        if len(hasil_filter) == 0:
+            print()
+            print(KUNING + "[!] Maaf ya, film yang kamu cari belum ketemu nih." + RESET)
+            sub_pilih = tanya_ya_tidak("Mau coba cari film lain? (y/n): ")
+            if sub_pilih == "y":
                 continue
             else:
                 break
         else:
-            display_movie_table(filtered)
+            tampilkan_tabel_film(hasil_filter)
             
-            # Poin 5: Integrasi Reservasi di dalam lihat detail film
             while True:
-                m_id = input("\nMasukkan ID Film untuk melihat detail/pesan (atau ketik 'batal'): ").strip().upper()
-                if m_id == 'BATAL':
+                print()
+                id_film = input("Ketik ID Film yang mau dicek atau dipesan (ketik 'batal' kalau mau kembali): ").strip().upper()
+                if id_film == "BATAL":
                     break
                 
-                selected_movie = next((film for film in filtered if film["movie_id"] == m_id), None)
-                if selected_movie:
-                    print(f"\n--- DETAIL FILM: {selected_movie['judul']} ---")
-                    print(f"Genre    : {selected_movie['genre']}")
-                    print(f"Studio   : {selected_movie['studio']}")
-                    print(f"Harga    : Rp{selected_movie['harga']:,}")
-                    print(f"Jadwal   : {selected_movie['jadwal']}")
+                film_dipilih = None
+                for film in hasil_filter:
+                    if film["movie_id"] == id_film:
+                        film_dipilih = film
+                        break
+                
+                if film_dipilih is not None:
+                    print("\n--- DETAIL FILM:", film_dipilih["judul"], "---")
+                    print("Genre    :", film_dipilih["genre"])
+                    print("Studio   :", film_dipilih["studio"])
+                    print("Harga    : Rp" + format(int(film_dipilih["harga"]), ","))
+                    print("Jadwal   :", film_dipilih["jadwal"])
                     
-                    # Poin 2: Redirect ke login jika guest ingin pesan
-                    if not current_user:
-                        print(f"\n{Fore.YELLOW}[!] Anda harus login terlebih dahulu untuk melakukan reservasi tiket.{Style.RESET_ALL}")
-                        while True:
-                            opsi_login = input("Ingin login sekarang? (y/n): ").strip().lower()
-                            if opsi_login in ['y', 'n']:
-                                break
-                            print(f"{Fore.RED}[!] Masukkan 'y' atau 'n'.{Style.RESET_ALL}")
+                    if not pengguna_saat_ini:
+                        print()
+                        print(KUNING + "[!] Wah, kamu harus login dulu nih kalau mau pesan tiket." + RESET)
+                        opsi_login = tanya_ya_tidak("Mau login sekarang biar bisa pesan tiket? (y/n): ")
                             
-                        if opsi_login == 'y':
+                        if opsi_login == "y":
                             from auth import login
                             usr, role = login()
                             if usr:
-                                current_user = usr
-                                customer_features.make_reservation(current_user, pre_selected_movie_id=m_id)
+                                pengguna_saat_ini = usr
+                                customer_features.make_reservation(pengguna_saat_ini, pre_selected_movie_id=id_film)
                         else:
-                            print("Reservasi dibatalkan.")
+                            print("Oke, pemesanan tiket dibatalkan ya.")
                     else:
-                        while True:
-                            pesan = input("Ingin memesan tiket untuk film ini? (y/n): ").strip().lower()
-                            if pesan in ['y', 'n']:
-                                break
-                            print(f"{Fore.RED}[!] Masukkan 'y' atau 'n'.{Style.RESET_ALL}")
-                            
-                        if pesan == 'y':
-                            customer_features.make_reservation(current_user, pre_selected_movie_id=m_id)
+                        pesan = tanya_ya_tidak("Gimana, jadi pesan tiket untuk film ini? (y/n): ")
+                        if pesan == "y":
+                            customer_features.make_reservation(pengguna_saat_ini, pre_selected_movie_id=id_film)
                     break
                 else:
-                    print(f"{Fore.RED}[!] ID Film tidak ditemukan. Silakan masukkan ID yang benar.{Style.RESET_ALL}")
+                    tampilkan_error("ID Film-nya sepertinya salah ketik. Coba masukkan ID yang sesuai daftar ya.")
             
-            while True:
-                lanjut = input("\nKeluar dari menu pencarian? (y/n): ").strip().lower()
-                if lanjut in ['y', 'n']:
-                    break
-                print(f"{Fore.RED}[!] Masukkan 'y' atau 'n'.{Style.RESET_ALL}")
-            if lanjut == 'y':
+            lanjut = tanya_ya_tidak("\nApakah kamu mau keluar dari menu pencarian ini? (y/n): ")
+            if lanjut == "y":
                 break
                 
-    return current_user
-
-def display_movie_table(movies_list):
-    table = PrettyTable()
-    table.field_names = ["ID Film", "Judul Film", "Genre", "Studio", "Harga (Rp)", "Jadwal Tayang"]
-    for m in movies_list:
-        table.add_row([m["movie_id"], m["judul"], m["genre"], m["studio"], f"{m['harga']:,}", m["jadwal"]])
-    print(table)
+    return pengguna_saat_ini
