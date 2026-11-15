@@ -46,9 +46,10 @@ def update_movie_detail():
         if m_id == 'BATAL':
             return
         selected_movie = next((m for m in movies if m["movie_id"] == m_id), None)
-        if selected_movie:
+        if selected_movie != None:
             break
-        print("[!] Error: ID Film tidak ditemukan.")
+        else:
+            print("[!] Error: ID Film tidak ditemukan.")
         
     print(f"Mengedit Film: {selected_movie['judul']}")
     while True:
@@ -80,7 +81,10 @@ def delete_movie():
         if m_id == 'BATAL':
             return
             
-        new_movies = [m for m in movies if m["movie_id"] != m_id]
+        new_movies = []
+        for m in movies:
+            if m["movie_id"] != m_id:
+                new_movies.append(m)
         if len(new_movies) < len(movies):
             save_excel(MOVIES_FILE, new_movies)
             print(f"[Sukses] Film dengan ID {m_id} berhasil dihapus dari sistem.")
@@ -108,7 +112,12 @@ def delete_customer_account():
         if usn == 'batal':
             return
             
-        new_users = [u for u in users if not (u["username"] == usn and u["role"] == "customer")]
+        new_users = []
+        for u in users:
+            if u["username"] == usn and u["role"] == "customer":
+                pass
+            else:
+                new_users.append(u)
         if len(new_users) < len(users):
             save_excel(USERS_FILE, new_users)
             print(f"[Sukses] Akun pelanggan '{usn}' berhasil dihapus.")
@@ -142,9 +151,10 @@ def view_and_update_transactions():
             if code_input == 'BATAL':
                 return
             selected_tx = next((t for t in transactions if t["booking_code"] == code_input), None)
-            if selected_tx:
+            if selected_tx != None:
                 break
-            print("[!] Error: Kode Booking tidak ditemukan.")
+            else:
+                print("[!] Error: Kode Booking tidak ditemukan.")
             
         while True:
             print("Pilih Status Baru: 1. Lunas | 2. Pending | 3. Batal")
