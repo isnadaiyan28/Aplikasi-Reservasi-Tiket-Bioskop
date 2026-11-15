@@ -1,27 +1,33 @@
 from data_store import load_excel, save_excel, USERS_FILE
 
 def register_customer():
-    print("\n=== REGISTRASI PELANGGAN BARU ===")
+    print("\n=== Registrasi Pelanggan Baru ===")
     users = load_excel(USERS_FILE)
-    username = input("Masukkan Username Baru: ").strip().lower()
+    username = input("Yuk buat username baru kamu: ").strip().lower()
     
     if not username:
-        print("Error: Username tidak boleh kosong!")
+        print("[!] Duh, username nggak boleh kosong nih!")
         return
         
-    if any(u["username"] == username for u in users):
-        print("Error: Username sudah terdaftar! Gunakan username lain.")
+    # Mengecek apakah username sudah ada 
+    username_sudah_ada = False
+    for u in users:
+        if u["username"] == username:
+            username_sudah_ada = True
+            break
+            
+    if username_sudah_ada:
+        print("[!] Username itu sudah dipakai orang lain. Coba pakai nama lain ya.")
         return
         
-    password = input("Masukkan Password (min 5 karakter): ")
-    try:
-        if len(password) < 5:
-            raise ValueError("Password terlalu pendek! Minimal 5 karakter.")
-    except ValueError as e:
-        print(f"Error: {e}")
+    password = input("Masukkan password (minimal 5 karakter ya): ")
+    
+    
+    if len(password) < 5:
+        print("[!] Passwordnya kependekan nih! Minimal harus 5 karakter.")
         return
         
-    nama = input("Masukkan Nama Lengkap: ").strip()
+    nama = input("Masukkan nama lengkap kamu: ").strip()
     users.append({
         "username": username,
         "password": str(password),
@@ -29,41 +35,43 @@ def register_customer():
         "nama": nama
     })
     save_excel(USERS_FILE, users)
-    print("Registrasi akun berhasil! Silakan login.")
+    print("[Sukses] Hore! Akun kamu berhasil dibuat. Sekarang kamu sudah bisa login.")
 
 def login():
-    print("\n=== SYSTEM LOGIN CINEMA ===")
+    print("\n=== Login Bioskop ===")
     users = load_excel(USERS_FILE)
     username = input("Username: ").strip().lower()
     password = input("Password: ")
     
     for u in users:
         if str(u["username"]) == username and str(u["password"]) == str(password):
-            print(f"Login Berhasil! Selamat datang, {u['nama']}.")
+            print("[Sukses] Login berhasil! Selamat datang, " + u['nama'] + ".")
             return username, u["role"]
             
-    print("Error: Username atau Password salah!")
+    print("[!] Ups, username atau password kamu sepertinya salah.")
     return None, None
 
 def change_password(username):
     users = load_excel(USERS_FILE)
-    print("\n=== UBAH PASSWORD AKUN ===")
-    pwd_lama = input("Masukkan Password Lama: ")
+    print("\n=== Ubah Password Akun ===")
+    pwd_lama = input("Masukkan password lama kamu: ")
     
-    found = False
+    ditemukan = False
     for u in users:
         if u["username"] == username:
-            found = True
+            ditemukan = True
             if str(u["password"]) != str(pwd_lama):
-                print("Error: Password lama tidak sesuai!")
+                print("[!] Password lama yang kamu masukkan kurang tepat nih.")
                 return
-            pwd_baru = input("Masukkan Password Baru: ")
+            
+            pwd_baru = input("Masukkan password baru (minimal 5 karakter): ")
             if len(pwd_baru) < 5:
-                print("Error: Password baru minimal 5 karakter!")
+                print("[!] Password baru kamu terlalu pendek! Minimal 5 karakter ya.")
                 return
+            
             u["password"] = str(pwd_baru)
             break
             
-    if found:
+    if ditemukan:
         save_excel(USERS_FILE, users)
-        print("Password berhasil diperbarui!")
+        print("[Sukses] Mantap, password kamu berhasil diperbarui!")
