@@ -38,17 +38,23 @@ def main():
                             break
 
                     if apakah_admin:
-                        print("\n[!] Akun admin tidak dapat memesan tiket dari menu tamu.")
-                        print("[!] Silakan login sebagai pelanggan untuk memesan tiket.")
+                        print("\n[!] Maaf, akun admin tidak bisa mengakses fitur ini. Silakan login sebagai pelanggan.")
+                        print("[!] Silahkan login sebagai pelanggan untuk mengakses fitur ini.")
                     else:
                         current_user = nama_tamu
                         user_role = "customer"
-                        print(f"\n[!] Selamat datang, {current_user}! Anda sekarang dapat memesan tiket.")
+                        print(f"\n[✓] Selamat datang, {current_user}! Anda sekarang masuk sebagai pelanggan.")
+
             elif pilihan == "4":
                 print("Terima kasih telah menggunakan sistem bioskop!")
                 break
             else:
                 print("\n[!] Error: Pilihan menu tidak valid! Harap masukkan angka 1 sampai 4.")
+        elif user_role == "admin":
+            current_user, user_role = menu_admin(current_user)
+
+        elif user_role == "customer":
+            current_user, user_role = menu_customer(current_user)
 
 def menu_admin(current_user):
         tampilkan_header(f"MENU UTAMA ADMIN - {current_user}")
