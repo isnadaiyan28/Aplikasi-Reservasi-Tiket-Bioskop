@@ -144,8 +144,12 @@ def search_and_filter_movies(pengguna_saat_ini=None):
                             from auth import login
                             usr, role = login()
                             if usr:
-                                pengguna_saat_ini = usr
-                                customer_features.make_reservation(pengguna_saat_ini, pre_selected_movie_id=id_film)
+                                if role == "admin":
+                                    print( MERAH + "[!] Maaf, akun admin tidak bisa memesan tiket. Silakan login sebagai pelanggan." + RESET)
+                                    print("[!] Silakan login sebagai pelanggan untuk memesan tiket.")
+                                else:
+                                    pengguna_saat_ini = usr
+                                    customer_features.make_reservation(pengguna_saat_ini, pre_selected_movie_id=id_film)
                         else:
                             print("Oke, pemesanan tiket dibatalkan ya.")
                     else:

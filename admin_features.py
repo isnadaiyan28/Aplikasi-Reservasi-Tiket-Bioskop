@@ -1,5 +1,5 @@
 from data_store import load_excel, save_excel, MOVIES_FILE, USERS_FILE, TRANSACTIONS_FILE
-from search_filter import display_movie_table
+from search_filter import tampilkan_tabel_film
 from prettytable import PrettyTable
 
 def add_new_movie():
@@ -39,7 +39,7 @@ def update_movie_detail():
     
     # Poin 4: Tampilkan daftar film yang sedang tayang saat ini
     print("\nDaftar Film yang Sedang Tayang:")
-    display_movie_table(movies)
+    tampilkan_tabel_film(movies)
     
     while True:
         m_id = input("\nMasukkan ID Film yang diubah (atau 'batal'): ").strip().upper()
@@ -74,7 +74,7 @@ def delete_movie():
     
     # Poin 4: Tampilkan daftar film yang sedang tayang saat ini
     print("\nDaftar Film yang Sedang Tayang:")
-    display_movie_table(movies)
+    tampilkan_tabel_film(movies)
     
     while True:
         m_id = input("\nMasukkan ID Film yang akan dihapus (atau 'batal'): ").strip().upper()
