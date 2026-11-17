@@ -7,7 +7,6 @@ MOVIES_FILE = os.path.join(DATA_DIR, "movies.xlsx")
 TRANSACTIONS_FILE = os.path.join(DATA_DIR, "transactions.xlsx")
 
 def init_storage():
-    """Membuat folder data dan file Excel default jika belum ada."""
     if not os.path.exists(DATA_DIR):
         os.makedirs(DATA_DIR)
     
@@ -30,7 +29,7 @@ def init_storage():
                 "harga": 45000,
                 "studio": "Studio 1",
                 "kapasitas": 12,
-                "jadwal": "13:00, 16:00, 19:00"  # Disimpan sebagai string terpisah koma
+                "jadwal": "13:00, 16:00, 19:00"
             },
             {
                 "movie_id": "M2",
@@ -52,16 +51,13 @@ def init_storage():
         df_tx.to_excel(TRANSACTIONS_FILE, index=False)
 
 def load_excel(filepath):
-    """Membaca file Excel dan mengembalikan list of dicts."""
     try:
         df = pd.read_excel(filepath)
-        # Mengatur agar nilai NaN/kosong tidak merusak tipe data string
         df = df.fillna("")
         return df.to_dict(orient="records")
     except Exception:
         return []
 
 def save_excel(filepath, data_list):
-    """Menyimpan list of dicts kembali ke file Excel."""
     df = pd.DataFrame(data_list)
     df.to_excel(filepath, index=False)
