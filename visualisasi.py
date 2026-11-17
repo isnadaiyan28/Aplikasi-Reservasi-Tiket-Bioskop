@@ -1,31 +1,34 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 from data_store import TRANSACTIONS_FILE
+from search_filter import tampilkan_header
 
 def show_sales_analytics():
+    tampilkan_header("ANALISIS PENJUALAN TIKET")
     try:
-        df = pd.read_excel(TRANSACTIONS_FILE)
+        data_transaksi = pd.read_excel(TRANSACTIONS_FILE)
     except Exception:
-        print("Gagal membaca file transaksi Excel.")
+        print("Gagal membaca file transaksi. Pastikan file transaksi excel ada dan bisa diakses.")
         return
         
-    if df.empty:
-        print("Belum ada data transaksi untuk divisualisasikan.")
+    if data_transaksi.empty:
+        print("Belum ada data transaksi yang bisa ditampilkan.")
         return
         
-    df_lunas = df[df["status"] == "Lunas"]
-    if df_lunas.empty:
-        print("Belum ada transaksi berstatus Lunas untuk grafik.")
+    transaksi_lunas = data_transaksi[data_transaksi["status"] == "Lunas"]
+    if transaksi_lunas.empty:
+        print("Belum ada transaksi berstatus Lunas, jadi grafik belum bisa dibuat.")
         return
 
-    income_per_movie = df_lunas.groupby("judul")["harga"].sum()
+    pendapatan_per_film = transaksi_lunas.groupby("judul")["harga"].sum()
     
+    print("\nMenampilkan grafik... (tutup jendela grafik untuk kembali ke menu)")
     plt.figure(figsize=(9, 5))
-    income_per_movie.plot(kind="bar", color="teal", edgecolor="black")
-    plt.title("Rekapitulasi Total Pendapatan Tiket Per Film (Status: Lunas)")
+    pendapatan_per_film.plot(kind="bar", color="teal", edgecolor="black")
+    plt.title("Total Pendapatan Tiket per Film (Status: Lunas)")
     plt.xlabel("Judul Film")
     plt.ylabel("Total Pendapatan (Rp)")
     plt.xticks(rotation=15)
-    plt.grid(axis='y', linestyle='--', alpha=0.7)
+    plt.grid(axis="y", linestyle="--", alpha=0.7)
     plt.tight_layout()
     plt.show()

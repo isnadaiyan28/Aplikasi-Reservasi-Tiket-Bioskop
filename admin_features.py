@@ -1,10 +1,10 @@
 from data_store import load_excel, save_excel, MOVIES_FILE, USERS_FILE, TRANSACTIONS_FILE
-from search_filter import tampilkan_tabel_film
+from search_filter import tampilkan_tabel_film, tampilkan_header
 from prettytable import PrettyTable
 
 def add_new_movie():
     movies = load_excel(MOVIES_FILE)
-    print("\n=== TAMBAH FILM BARU ===")
+    tampilkan_header("TAMBAH FILM BARU")
     m_id = f"M{len(movies) + 1}"
     judul = input("Masukkan Judul Film: ").strip()
     genre = input("Masukkan Genre: ").strip()
@@ -14,14 +14,14 @@ def add_new_movie():
             harga = int(input("Masukkan Harga Tiket (Rp): "))
             break
         except ValueError:
-            print("[!] Error: Harga harus berupa angka!")
+            print("[!] Error: Harga harus berupa angka ya. Coba masukkan lagi!")
             
     while True:
         try:
             kapasitas = int(input("Kapasitas Kursi Studio: "))
             break
         except ValueError:
-            print("[!] Error: Kapasitas harus berupa angka!")
+            print("[!] Error: Kapasitas harus berupa angka ya. Coba masukkan lagi!")
         
     studio = input("Nama Studio (Contoh: Studio 1): ").strip()
     jadwal = input("Jadwal Tayang (pisahkan dengan koma, contoh: 13:00, 16:00): ").strip()
@@ -31,11 +31,11 @@ def add_new_movie():
         "harga": harga, "studio": studio, "kapasitas": kapasitas, "jadwal": jadwal
     })
     save_excel(MOVIES_FILE, movies)
-    print(f"[Sukses] Film '{judul}' berhasil ditambahkan dengan ID: {m_id}")
+    print(f"[Sukses] Mantap! Film '{judul}' berhasil ditambahkan dengan ID: {m_id}")
 
 def update_movie_detail():
     movies = load_excel(MOVIES_FILE)
-    print("\n=== UPDATE JAM TAYANG / HARGA TIKET ===")
+    tampilkan_header("UPDATE HARGA / JADWAL TAYANG FILM")
     
     # Poin 4: Tampilkan daftar film yang sedang tayang saat ini
     print("\nDaftar Film yang Sedang Tayang:")
@@ -49,9 +49,9 @@ def update_movie_detail():
         if selected_movie != None:
             break
         else:
-            print("[!] Error: ID Film tidak ditemukan.")
+            print("[!] Error: ID Film tidak ditemukan. Coba cek lagi daftar di atas ya.")
         
-    print(f"Mengedit Film: {selected_movie['judul']}")
+    print(f"Oke, kamu sedang mengedit Film: {selected_movie['judul']}")
     while True:
         try:
             harga_baru = input(f"Harga Baru (Kosongkan jika tetap Rp{selected_movie['harga']}): ")
@@ -59,18 +59,18 @@ def update_movie_detail():
                 selected_movie["harga"] = int(harga_baru)
             break
         except ValueError:
-            print("[!] Error: Input harga harus berupa angka!")
+            print("[!] Error: Harga harus berupa angka ya. Coba masukkan lagi!")
             
     jadwal_baru = input("Jadwal Baru (Kosongkan jika tidak berubah, pisah koma): ")
     if jadwal_baru:
         selected_movie["jadwal"] = jadwal_baru.strip()
         
     save_excel(MOVIES_FILE, movies)
-    print("[Sukses] Data film berhasil diperbarui!")
+    print("[Sukses] Selesai! Data film berhasil diperbarui!")
 
 def delete_movie():
     movies = load_excel(MOVIES_FILE)
-    print("\n=== HAPUS FILM (TURUN LAYAR) ===")
+    tampilkan_header("HAPUS FILM (TURUN LAYAR)")
     
     # Poin 4: Tampilkan daftar film yang sedang tayang saat ini
     print("\nDaftar Film yang Sedang Tayang:")
@@ -90,11 +90,11 @@ def delete_movie():
             print(f"[Sukses] Film dengan ID {m_id} berhasil dihapus dari sistem.")
             break
         else:
-            print("[!] Error: ID Film tidak ditemukan.")
+            print("[!] Error: ID Film tidak ditemukan. Coba cek lagi daftar di atas ya.")
 
 def view_all_customers():
     users = load_excel(USERS_FILE)
-    print("\n=== DAFTAR PELANGGAN TERDAFTAR ===")
+    tampilkan_header("DAFTAR PELANGGAN TERDAFTAR")
     table = PrettyTable()
     table.field_names = ["Username", "Nama Lengkap", "Role"]
     
@@ -105,7 +105,7 @@ def view_all_customers():
 
 def delete_customer_account():
     users = load_excel(USERS_FILE)
-    print("\n=== HAPUS AKUN PELANGGAN (PALSU/AKUN FAKE) ===")
+    tampilkan_header("HAPUS AKUN PELANGGAN PALSU")
     
     while True:
         usn = input("Masukkan Username Pelanggan yang akan dihapus (atau 'batal'): ").strip().lower()
@@ -123,11 +123,11 @@ def delete_customer_account():
             print(f"[Sukses] Akun pelanggan '{usn}' berhasil dihapus.")
             break
         else:
-            print("[!] Error: Username tidak ditemukan atau merupakan akun Admin.")
+            print("[!] Error: Username tidak ditemukan atau itu akun Admin yang tidak bisa dihapus. Coba cek lagi ya.")
 
 def view_and_update_transactions():
     transactions = load_excel(TRANSACTIONS_FILE)
-    print("\n=== REKAPITULASI & KONFIRMASI TRANSAKSI ===")
+    tampilkan_header("REKAPITULASI & UPDATE STATUS TRANSAKSI")
     
     if not transactions:
         print("Belum ada transaksi tiket masuk.")
@@ -143,7 +143,7 @@ def view_and_update_transactions():
         pilihan = input("\nUbah status pembayaran pelanggan? (y/n): ").strip().lower()
         if pilihan in ['y', 'n']:
             break
-        print("[!] Masukkan 'y' atau 'n'.")
+        print("[!] Ketik 'y' untuk ya atau 'n' untuk tidak.")
         
     if pilihan == 'y':
         while True:
@@ -154,7 +154,7 @@ def view_and_update_transactions():
             if selected_tx != None:
                 break
             else:
-                print("[!] Error: Kode Booking tidak ditemukan.")
+                print("[!] Error: Kode Booking tidak ditemukan. coba cek lagi tabel di atas ya.")
             
         while True:
             print("Pilih Status Baru: 1. Lunas | 2. Pending | 3. Batal")
@@ -163,7 +163,7 @@ def view_and_update_transactions():
             if st in status_map:
                 selected_tx["status"] = status_map[st]
                 save_excel(TRANSACTIONS_FILE, transactions)
-                print(f"[Sukses] Status transaksi {code_input} diubah menjadi {status_map[st]}!")
+                print(f"[Sukses] Status transaksi {code_input} sudah diubah menjadi {status_map[st]}!")
                 break
             else:
                 print("[!] Error: Pilihan status tidak valid. Masukkan angka 1 sampai 3.")
