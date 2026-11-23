@@ -1,16 +1,24 @@
 from datetime import datetime
+from colorama import init, Fore, Style
 from data_store import load_excel, save_excel, MOVIES_FILE, USERS_FILE, TRANSACTIONS_FILE
 from search_filter import tampilkan_tabel_film, tampilkan_header
 from prettytable import PrettyTable
 
+init()
+
+MERAH = Fore.RED
+HIJAU = Fore.GREEN
+RESET = Style.RESET_ALL
+
 def tampilkan_error(pesan):
-    print(f"[!] {pesan}")
+    print(MERAH + "[!] " + pesan + RESET)
 def tampilkan_sukses(pesan):
-    print(f"[Sukses] {pesan}")
+    print(HIJAU + "[Sukses] " + pesan + RESET)
 
 def tekan_enter():
     input("\nTekan Enter untuk kembali ke menu")
 
+# untuk mengecek format jadwal yang dimasukkan admin
 def cek_jadwal(teks):
     daftar_jam = []
     for potongan in teks.split(","):
@@ -186,6 +194,7 @@ def management_film():
         else:
             tampilkan_error("Pilihan menu tidak valid. Masukkan angka 1 sampai 5.")
 
+# ===== MANAJEMEN PELANGGAN =====
 def lihat_semua_pelanggan():
     users = load_excel(USERS_FILE)
     tampilkan_header("Daftar Pelanggan yang Terdaftar")
@@ -236,7 +245,7 @@ def management_pelanggan():
         elif pilihan == "3":
             return
         else:
-            tampilkan_error("Pilihan menutidak valid. Silakan masukkan lagi angka 1 sampai 3.")
+            tampilkan_error("Pilihan menu tidak valid. Silakan masukkan lagi angka 1 sampai 3.")
 
 def lihat_dan_ubah_transaksi():
     transaksi = load_excel(TRANSACTIONS_FILE)
@@ -271,14 +280,14 @@ def lihat_dan_ubah_transaksi():
         else:
             tampilkan_error("Kode Booking tidak ditemukan. coba cek lagi tabel di atas ya.")
             
-        while True:
-            print("Pilih Status Baru: 1. Lunas | 2. Pending | 3. Batal")
-            st = input("Pilihan (1-3): ").strip()
-            status_map = {"1": "Lunas", "2": "Pending", "3": "Batal"}
-            if st in status_map:
-                transaksi_dipilih["status"] = status_map[st]
-                save_excel(TRANSACTIONS_FILE, transaksi)
-                tampilkan_sukses(f"Status transaksi {kode_input} sudah diubah menjadi {status_map[st]}!")
-                break
-            else:
-                tampilkan_error("Pilihan status tidak valid. Masukkan angka 1 sampai 3.")
+    while True:
+        print("Pilih Status Baru: 1. Lunas | 2. Pending | 3. Batal")
+        st = input("Pilihan (1-3): ").strip()
+        status_map = {"1": "Lunas", "2": "Pending", "3": "Batal"}
+        if st in status_map:
+            transaksi_dipilih["status"] = status_map[st]
+            save_excel(TRANSACTIONS_FILE, transaksi)
+            tampilkan_sukses(f"Status transaksi {kode_input} sudah diubah menjadi {status_map[st]}!")
+            break
+        else:
+            tampilkan_error("Pilihan status tidak valid. Masukkan angka 1 sampai 3.")
