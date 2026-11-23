@@ -1,23 +1,23 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 from data_store import TRANSACTIONS_FILE
-from search_filter import tampilkan_header
+from search_filter import tampilkan_error, tampilkan_header
 
-def show_sales_analytics():
+def show_sales_analysis():
     tampilkan_header("ANALISIS PENJUALAN TIKET")
     try:
         data_transaksi = pd.read_excel(TRANSACTIONS_FILE)
     except Exception:
-        print("Gagal membaca file transaksi. Pastikan file transaksi excel ada dan bisa diakses.")
+        tampilkan_error("Gagal membaca file transaksi. Pastikan file transaksi excel ada dan bisa diakses.")
         return
         
     if data_transaksi.empty:
-        print("Belum ada data transaksi yang bisa ditampilkan.")
+        tampilkan_error("Belum ada data transaksi yang bisa ditampilkan.")
         return
         
     transaksi_lunas = data_transaksi[data_transaksi["status"] == "Lunas"]
     if transaksi_lunas.empty:
-        print("Belum ada transaksi berstatus Lunas, jadi grafik belum bisa dibuat.")
+        tampilkan_error("Belum ada transaksi berstatus Lunas, jadi grafik belum bisa dibuat.")
         return
 
     pendapatan_per_film = transaksi_lunas.groupby("judul")["harga"].sum()

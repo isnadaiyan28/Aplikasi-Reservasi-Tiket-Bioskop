@@ -1,10 +1,10 @@
-from data_store import USERS_FILE, init_storage, load_excel
+from data_store import init_storage
 from auth import login, register_customer, change_password
 from search_filter import search_and_filter_movies
-from customer_features import view_customer_history, change_seat_choice, cancel_reservation, tampilkan_header
-from admin_features import (add_new_movie, update_movie_detail, delete_movie, 
-                            view_all_customers, delete_customer_account, view_and_update_transactions)
-from visualisasi import show_sales_analytics
+from customer_features import view_customer_history, change_seat_choice, cancel_reservation
+from admin_features import (management_film, management_pelanggan,
+                            lihat_dan_ubah_transaksi)
+from visualisasi import show_sales_analysis
 
 def main():
     init_storage()
@@ -13,111 +13,68 @@ def main():
 
     while True:
         if not current_user:
-            tampilkan_header("APLIKASI RESERVASI TIKET BIOSKOP")
+            print("\n=========================================")
+            print("  APLIKASI RESERVASI TIKET BIOSKOP")
+            print("=========================================")
             print("1. Login Akun")
             print("2. Registrasi Pelanggan Baru")
             print("3. Cari & Lihat Film (Guest/Public)")
             print("4. Keluar Program")
-
-            pilihan = input("pilih menu (1-4): ").strip()
+            
+            pilihan = input("Pilih Menu (1-4): ").strip()
 
             if pilihan == "1":
                 current_user, user_role = login()
             elif pilihan == "2":
                 register_customer()
             elif pilihan == "3":
-                nama_tamu = search_and_filter_movies(None)
-
-                if nama_tamu:
-                    daftar_pengguna = load_excel(USERS_FILE)
-                    apakah_admin = False
-
-                    for akun in daftar_pengguna:
-                        if akun.get("username") == nama_tamu and akun.get("role") == "admin":
-                            apakah_admin = True
-                            break
-
-                    if apakah_admin:
-                        print("\n[!] Maaf, akun admin tidak bisa mengakses fitur ini. Silakan login sebagai pelanggan.")
-                        print("[!] Silahkan login sebagai pelanggan untuk mengakses fitur ini.")
-                    else:
-                        current_user = nama_tamu
-                        user_role = "customer"
-                        print(f"\n[✓] Selamat datang, {current_user}! Anda sekarang masuk sebagai pelanggan.")
-
+                current_user = search_and_filter_movies(current_user)
+                if current_user:
+                    user_role = "customer"
             elif pilihan == "4":
                 print("Terima kasih telah menggunakan sistem bioskop!")
                 break
             else:
                 print("\n[!] Error: Pilihan menu tidak valid! Harap masukkan angka 1 sampai 4.")
+
         elif user_role == "admin":
-            current_user, user_role = menu_admin(current_user)
+            print(f"\n--- MENU UTAMA ADMIN ({current_user}) ---")
+            print("1. Management Film")
+            print("2. Management Pelanggan")
+            print("3. Rekapitulasi & Update Status Transaksi")
+            print("4. Analytics & Visualisasi Pendapatan")
+            print("5. Logout")
+
+            pilihan = input("Pilih Menu Admin (1-5): ").strip()
+
+            if pilihan == "1": management_film()
+            elif pilihan == "2": management_pelanggan()
+            elif pilihan == "3": lihat_dan_ubah_transaksi()
+            elif pilihan == "4": show_sales_analysis()
+            elif pilihan == "5": current_user = user_role = None
+            else:
+                print("\n[!] Error: Pilihan menu admin tidak valid! Masukkan angka 1-5.")
 
         elif user_role == "customer":
-            current_user, user_role = menu_customer(current_user)
+            # Menu Reservasi Tiket terpisah sudah dihapus dan disatukan di dalam menu Cari & Filter Film
+            print(f"\n--- MENU UTAMA PELANGGAN ({current_user}) ---")
+            print("1. Cari & Filter Film Tayang & Pesan Tiket")
+            print("2. Lihat Riwayat Pesanan Tiket (Read)")
+            print("3. Tukar Pilihan Kursi [Pending Payment] (Update)")
+            print("4. Batalkan Pesanan Tiket (Delete)")
+            print("5. Ubah Password Akun (Update)")
+            print("6. Logout")
+            
+            pilihan = input("Pilih Menu Pelanggan (1-6): ").strip()
 
-def menu_admin(current_user):
-        tampilkan_header(f"MENU UTAMA ADMIN - {current_user}")
-        print("1. Tambah Film Baru")
-        print("2. Update Harga / Jadwal Tayang")
-        print("3. Hapus Film Turun Layar")
-        print("4. Lihat Daftar Pelanggan Terdaftar")
-        print("5. Hapus Akun Pelanggan Palsu")
-        print("6. Rekapitulasi & Update Status Transaksi")
-        print("7. Analytics & Visualisasi Pendapatan")
-        print("8. Logout")
-
-        pilihan = input("Pilih Menu Admin (1-8): ").strip()
-
-        if pilihan == "1":
-            add_new_movie()
-        elif pilihan == "2":
-            update_movie_detail()
-        elif pilihan == "3":
-            delete_movie()
-        elif pilihan == "4":
-            view_all_customers()
-        elif pilihan == "5":
-            delete_customer_account()
-        elif pilihan == "6":
-            view_and_update_transactions()
-        elif pilihan == "7":
-            show_sales_analytics()
-        elif pilihan == "8":
-            print("\n[✓] Berhasil logout dari akun admin.")
-            return None, None
-        else:
-            print("\n[!] Error: Pilihan menu admin tidak valid! Harap masukkan angka 1 sampai 8.")
-
-        return current_user, "admin"
-
-def menu_customer(current_user):
-        tampilkan_header(f"MENU UTAMA PELANGGAN - {current_user}")
-        print("1. Cari & Filter Film Tayang & Pesan Tiket")
-        print("2. Lihat Riwayat Pesanan Tiket")
-        print("3. Tukar Pilihan Kursi [Pending Payment]")
-        print("4. Batalkan Pesanan Tiket")
-        print("5. Ubah Password Akun")
-        print("6. Logout")
-
-        pilihan = input("Pilih Menu Pelanggan (1-6): ").strip()
-        if pilihan == "1":
-            search_and_filter_movies(current_user)
-        elif pilihan == "2":
-            view_customer_history(current_user)
-        elif pilihan == "3":
-            change_seat_choice(current_user)
-        elif pilihan == "4":
-            cancel_reservation(current_user)
-        elif pilihan == "5":
-            change_password(current_user)
-        elif pilihan == "6":
-            print("\n[✓] Berhasil logout dari akun pelanggan.")
-            return None, None
-        else:
-            print("\n[!] Error: Pilihan menu pelanggan tidak valid! Harap masukkan angka 1 sampai 6.")
-
-        return current_user, "customer"
+            if pilihan == "1": search_and_filter_movies(current_user)
+            elif pilihan == "2": view_customer_history(current_user)
+            elif pilihan == "3": change_seat_choice(current_user)
+            elif pilihan == "4": cancel_reservation(current_user)
+            elif pilihan == "5": change_password(current_user)
+            elif pilihan == "6": current_user = user_role = None
+            else:
+                print("\n[!] Error: Pilihan menu pelanggan tidak valid! Masukkan angka 1-6.")
 
 if __name__ == "__main__":
     main()
