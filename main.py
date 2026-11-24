@@ -4,6 +4,7 @@ from search_filter import search_and_filter_movies
 from customer_features import view_customer_history, change_seat_choice, cancel_reservation, tampilkan_header
 from admin_features import management_film, management_pelanggan, lihat_dan_ubah_transaksi
 from visualisasi import show_sales_analysis
+import sys
 
 def main():
     init_storage()
@@ -103,4 +104,8 @@ def menu_customer(current_user):
     return current_user, "customer"
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("\n[!] Program dihentikan oleh pengguna. Terima kasih telah menggunakan sistem bioskop!")
+        sys.exit(0)
