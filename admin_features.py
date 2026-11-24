@@ -195,9 +195,7 @@ def management_film():
             tampilkan_error("Pilihan menu tidak valid. Masukkan angka 1 sampai 5.")
 
 # ===== MANAJEMEN PELANGGAN =====
-def lihat_semua_pelanggan():
-    users = load_excel(USERS_FILE)
-    tampilkan_header("Daftar Pelanggan yang Terdaftar")
+def tampilkan_tabel_pelanggan(users):
     table = PrettyTable()
     table.field_names = ["Username", "Nama Lengkap", "Role"]
     
@@ -205,11 +203,19 @@ def lihat_semua_pelanggan():
         if u["role"] == "customer":
             table.add_row([u["username"], u["nama"], u["role"]])
     print(table)
+
+def lihat_semua_pelanggan():
+    users = load_excel(USERS_FILE)
+    tampilkan_header("Daftar Pelanggan yang Terdaftar")
+    tampilkan_tabel_pelanggan(users)
     tekan_enter()
 
 def hapus_akun_pelanggan():
     users = load_excel(USERS_FILE)
     tampilkan_header("Hapus Akun Pelanggan")
+    
+    print("\nDaftar Pelanggan yang Terdaftar:")
+    tampilkan_tabel_pelanggan(users)
     
     while True:
         usn = input("Masukkan Username Pelanggan yang mau dihapus (atau 'batal'): ").strip().lower()
