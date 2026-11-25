@@ -7,7 +7,6 @@ from visualisasi import tampilkan_error, tampilkan_peringatan, tampilkan_sukses,
 from colorama import init, Fore, Style
 
 
-
 init()
 
 ABU = Fore.LIGHTBLACK_EX
@@ -56,7 +55,7 @@ def tampilkan_kursi(kapasitas, kursi_terisi):
 def input_kursi(kursi_terisi, kursi_kosong, pertanyaan):
     while True:
         print()
-        kursi = input_aman(pertanyaan).strip().upper()
+        kursi = input(pertanyaan).strip().upper()
         if kursi == "BATAL":
             return None
         if kursi in kursi_terisi:
@@ -131,7 +130,7 @@ def make_reservation(username, pre_selected_movie_id=None):
             id_film = pre_selected_movie_id
             pre_selected_movie_id = None
         else:
-            id_film = input_aman("Masukkan ID Film (atau 'batal'): ").strip().upper()
+            id_film = input("Masukkan ID Film (atau 'batal'): ").strip().upper()
             if id_film == "BATAL":
                 return
         film = cari_film(daftar_film, id_film)
@@ -149,7 +148,7 @@ def make_reservation(username, pre_selected_movie_id=None):
         nomor = nomor + 1
 
     while True:
-        input_jadwal = input_aman("Pilih nomor jadwal (atau 'batal'): ").strip()
+        input_jadwal = input("Pilih nomor jadwal (atau 'batal'): ").strip()
         if input_jadwal.lower() == "batal":
             return
         if input_jadwal.isdigit() and 1 <= int(input_jadwal) <= len(daftar_jadwal):
@@ -209,7 +208,7 @@ def view_customer_history(username):
     tampilkan_header("Riwayat Tiket Saya")
     if len(riwayat_user) == 0:
         tampilkan_peringatan("Belum ada riwayat pemesanan tiket.")
-        input_aman("Tekan Enter untuk kembali ke menu...")
+        input("Tekan Enter untuk kembali ke menu...")
         return
 
     tabel = PrettyTable()
@@ -221,7 +220,7 @@ def view_customer_history(username):
                        transaksi["jadwal"], transaksi["kursi"], harga,
                        transaksi["status"], transaksi["tanggal"]])
     print(tabel)
-    input_aman("Tekan Enter untuk kembali ke menu...")
+    input("Tekan Enter untuk kembali ke menu...")
 
 
 def change_seat_choice(username):
@@ -261,11 +260,3 @@ def cancel_reservation(username):
     pesanan["status"] = "Batal"
     save_excel(TRANSACTIONS_FILE, semua_transaksi)
     tampilkan_sukses("Pesanan " + pesanan["booking_code"] + " dibatalkan.")
-
-
-def input_aman(pertanyaan):
-    while True:
-        try:
-            return input(pertanyaan)
-        except KeyboardInterrupt:
-            print()
