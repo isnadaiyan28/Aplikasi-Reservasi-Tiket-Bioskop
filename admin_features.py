@@ -10,12 +10,12 @@ init()
 MERAH = Fore.RED
 HIJAU = Fore.GREEN
 RESET = Style.RESET_ALL
+DAFTAR_GENRE = ["Action", "Sci-Fi", "Horror", "Comedy", "Drama", "Romance", "Thriller", "Animasi", "Adventure", "Fantasy"]
 
 def tampilkan_error(pesan):
     print(MERAH + "[!] " + pesan + RESET)
 def tampilkan_sukses(pesan):
     print(HIJAU + "[Sukses] " + pesan + RESET)
-
 def tekan_enter():
     input("\nTekan Enter untuk kembali ke menu")
 
@@ -47,17 +47,13 @@ def tambah_film_baru():
             break
         tampilkan_error("Judul film tidak boleh kosong ya. Coba masukkan lagi!")
 
+    print("\nDaftar Genre: " + ", ".join(DAFTAR_GENRE))
     while True:
-        genre = input("Masukkan Genre: ").strip()
-        ada_angka = False
-        for huruf in genre:
-            if huruf.isdigit():
-                ada_angka = True
-
+        genre = input("Masukkan Genre: ").strip().title()
         if genre == "":
             tampilkan_error("Genre film tidak boleh kosong ya. Coba masukkan lagi!")
-        elif ada_angka:
-            tampilkan_error("Genre tidak boleh berupa angka ya. Coba masukkan lagi!")
+        elif genre not in DAFTAR_GENRE:
+            tampilkan_error("Genre tidak ada di daftar. Pilih salah satu dari daftar genre ya!")
         else:
             break
     
