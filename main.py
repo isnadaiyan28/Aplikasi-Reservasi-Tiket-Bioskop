@@ -1,9 +1,11 @@
+import sys
 from data_store import USERS_FILE, init_storage, load_excel
 from auth import login, register_customer, change_password
 from search_filter import search_and_filter_movies
-from customer_features import view_customer_history, change_seat_choice, cancel_reservation, tampilkan_header
+from customer_features import view_customer_history, change_seat_choice, cancel_reservation
 from admin_features import management_film, management_pelanggan, lihat_dan_ubah_transaksi
-from visualisasi import show_sales_analysis
+from visualisasi import show_sales_analysis, tampilkan_error, tampilkan_peringatan, tampilkan_sukses, tampilkan_header
+
 
 def main():
     init_storage()
@@ -34,22 +36,26 @@ def main():
                             apakah_admin = True
                             break
                     if apakah_admin:
-                        print("\n[!] Maaf, akun admin tidak bisa mengakses fitur ini. Silakan login sebagai pelanggan.")
+                        print()
+                        tampilkan_error("Maaf, akun admin tidak bisa mengakses fitur ini. Silakan login sebagai pelanggan.")
                     else:
                         current_user = nama_tamu
                         user_role = "customer"
-                        print(f"\n[✓] Selamat datang, {current_user}! Anda sekarang masuk sebagai pelanggan.")
+                        print()
+                        tampilkan_sukses(f"Selamat datang, {current_user}! Anda sekarang masuk sebagai pelanggan.")
             elif pilihan == "4":
                 print("Terima kasih telah menggunakan sistem bioskop!")
                 break
             else:
-                print("\n[!] Error: Pilihan menu tidak valid! Harap masukkan angka 1 sampai 4.")
+                print()
+                tampilkan_error("Pilihan menu tidak valid! Harap masukkan angka 1 sampai 4.")
 
         elif user_role == "admin":
             current_user, user_role = menu_admin(current_user)
 
         elif user_role == "customer":
             current_user, user_role = menu_customer(current_user)
+
 
 def menu_admin(current_user):
     tampilkan_header(f"MENU UTAMA ADMIN - {current_user}")
@@ -69,11 +75,14 @@ def menu_admin(current_user):
     elif pilihan == "4":
         show_sales_analysis()
     elif pilihan == "5":
-        print("\n[✓] Berhasil logout dari akun admin.")
+        print()
+        tampilkan_sukses("Berhasil logout dari akun admin.")
         return None, None
     else:
-        print("\n[!] Error: Pilihan menu admin tidak valid! Harap masukkan angka 1 sampai 5.")
+        print()
+        tampilkan_error("Pilihan menu admin tidak valid! Harap masukkan angka 1 sampai 5.")
     return current_user, "admin"
+
 
 def menu_customer(current_user):
     tampilkan_header(f"MENU UTAMA PELANGGAN - {current_user}")
@@ -96,11 +105,18 @@ def menu_customer(current_user):
     elif pilihan == "5":
         change_password(current_user)
     elif pilihan == "6":
-        print("\n[✓] Berhasil logout dari akun pelanggan.")
+        print()
+        tampilkan_sukses("Berhasil logout dari akun pelanggan.")
         return None, None
     else:
-        print("\n[!] Error: Pilihan menu pelanggan tidak valid! Harap masukkan angka 1 sampai 6.")
+        print()
+        tampilkan_error("Pilihan menu pelanggan tidak valid! Harap masukkan angka 1 sampai 6.")
     return current_user, "customer"
 
+
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        tampilkan_peringatan("\nProgram dihentikan oleh pengguna. Terima kasih telah menggunakan sistem bioskop!")
+        sys.exit(0)
