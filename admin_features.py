@@ -14,8 +14,10 @@ DAFTAR_GENRE = ["Action", "Sci-Fi", "Horror", "Comedy", "Drama", "Romance", "Thr
 
 def tampilkan_error(pesan):
     print(MERAH + "[!] " + pesan + RESET)
+
 def tampilkan_sukses(pesan):
     print(HIJAU + "[Sukses] " + pesan + RESET)
+
 def tekan_enter():
     input("\nTekan Enter untuk kembali ke menu")
 
@@ -27,7 +29,7 @@ def cek_jadwal(teks):
 
     # jam harus dalam format HH:MM
     for jam in daftar_jam:
-        if  len(jam) != 5:
+        if len(jam) != 5:
             return None
         try:
             datetime.strptime(jam, "%H:%M")
@@ -56,16 +58,16 @@ def tambah_film_baru():
             tampilkan_error("Genre tidak ada di daftar. Pilih salah satu dari daftar genre ya!")
         else:
             break
-    
+
     while True:
         try:
             harga = int(input("Masukkan Harga Tiket (Rp): "))
             break
         except ValueError:
             tampilkan_error("Harga harus berupa angka ya. Coba masukkan lagi!")
-            
+
     while True:
-        try: 
+        try:
             kapasitas = int(input("Kapasitas Kursi Studio: "))
             break
         except ValueError:
@@ -77,7 +79,7 @@ def tambah_film_baru():
             tampilkan_error("Nama studio tidak boleh kosong ya. Coba masukkan lagi!")
         else:
             break
-    
+
     while True:
         jadwal = cek_jadwal(input("Jadwal Tayang (pisahkan dengan koma, contoh: 13:00, 16:00): ").strip())
         if jadwal:
@@ -104,11 +106,11 @@ def daftar_film():
 def perbarui_detail_film():
     movies = load_excel(MOVIES_FILE)
     tampilkan_header("Update Harga / Jadwal Tayang Film")
-    
+
     # tampilkan daftar film yang sedang tayang saat ini
     print("\nDaftar Film yang Sedang Tayang:")
     tampilkan_tabel_film(movies)
-    
+
     while True:
         m_id = input("\nMasukkan ID Film yang mau diubah (atau 'batal'): ").strip().upper()
         if m_id == 'BATAL':
@@ -120,7 +122,7 @@ def perbarui_detail_film():
             tampilkan_error("ID Film tidak ditemukan. Coba cek lagi daftar di atas ya.")
 
     print(f"Oke, kamu sedang mengedit Film: {film_dipilih['judul']}")
-   
+
     while True:
         try:
             harga_baru = input(f"Harga Baru (Kosongkan jika tetap Rp{film_dipilih['harga']}): ")
@@ -129,7 +131,7 @@ def perbarui_detail_film():
             break
         except ValueError:
             tampilkan_error("Harga harus berupa angka ya. Coba masukkan lagi!")
-            
+
     while True:
         jadwal_baru = input("Jadwal Baru (Kosongkan jika tidak berubah, pisah koma): ").strip()
         if jadwal_baru == "":
@@ -139,23 +141,23 @@ def perbarui_detail_film():
             film_dipilih["jadwal"] = hasil_jadwal
             break
         tampilkan_error("Format jadwal ada yang salah! Pakai jam HH:MM dipisah koma, contoh: 13:00, 16:00")
-        
+
     save_excel(MOVIES_FILE, movies)
     tampilkan_sukses("Selesai! Data film berhasil diperbarui!")
 
 def hapus_film():
     movies = load_excel(MOVIES_FILE)
     tampilkan_header("Hapus Film (Turun layar)")
-    
+
     # tampilkan daftar film yang sedang tayang saat ini
     print("\nDaftar Film yang Sedang Tayang:")
     tampilkan_tabel_film(movies)
-    
+
     while True:
         m_id = input("\nMasukkan ID Film yang akan dihapus (atau 'batal'): ").strip().upper()
         if m_id == 'BATAL':
             return
-            
+
         film_baru = []
         for m in movies:
             if m["movie_id"] != m_id:
@@ -195,7 +197,7 @@ def management_film():
 def tampilkan_tabel_pelanggan(users):
     table = PrettyTable()
     table.field_names = ["Username", "Nama Lengkap", "Role"]
-    
+
     for u in users:
         if u["role"] == "customer":
             table.add_row([u["username"], u["nama"], u["role"]])
@@ -210,15 +212,15 @@ def lihat_semua_pelanggan():
 def hapus_akun_pelanggan():
     users = load_excel(USERS_FILE)
     tampilkan_header("Hapus Akun Pelanggan")
-    
+
     print("\nDaftar Pelanggan yang Terdaftar:")
     tampilkan_tabel_pelanggan(users)
-    
+
     while True:
         usn = input("Masukkan Username Pelanggan yang mau dihapus (atau 'batal'): ").strip().lower()
         if usn == 'batal':
             return
-            
+
         user_baru = []
         for u in users:
             if u["username"] == usn and u["role"] == "customer":
@@ -253,11 +255,11 @@ def management_pelanggan():
 def lihat_dan_ubah_transaksi():
     transaksi = load_excel(TRANSACTIONS_FILE)
     tampilkan_header("Rekapitulasi & Update Status Transaksi")
-    
+
     if not transaksi:
         tampilkan_error("Belum ada transaksi tiket masuk.")
         return
-        
+
     table = PrettyTable()
     table.field_names = ["Kode Booking", "Pelanggan", "Judul Film", "Harga", "Status"]
     for t in transaksi:
@@ -277,15 +279,19 @@ def lihat_dan_ubah_transaksi():
 
     kode_input = jawaban["transaksi"].split(" - ")[0]
     transaksi_dipilih = next((t for t in transaksi if t["booking_code"] == kode_input), None)
-            
+
+    if transaksi_dipilih["status"] == "Batal":
+        tampilkan_error("Status transaksi sudah Batal dan tidak bisa diubah lagi.")
+        return
+
     while True:
-        print("Pilih Status Baru: 1. Lunas | 2. Pending | 3. Batal")
-        st = input("Pilihan (1-3): ").strip()
-        status_map = {"1": "Lunas", "2": "Pending", "3": "Batal"}
+        print("Pilih Status Baru: 1. Lunas | 2. Batal")
+        st = input("Pilihan (1-2): ").strip()
+        status_map = {"1": "Lunas", "2": "Batal"}
         if st in status_map:
             transaksi_dipilih["status"] = status_map[st]
             save_excel(TRANSACTIONS_FILE, transaksi)
             tampilkan_sukses(f"Status transaksi {kode_input} sudah diubah menjadi {status_map[st]}!")
             break
         else:
-            tampilkan_error("Pilihan status tidak valid. Masukkan angka 1 sampai 3.")
+            tampilkan_error("Pilihan status tidak valid. Masukkan angka 1 sampai 2.")
