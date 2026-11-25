@@ -1,4 +1,5 @@
 from datetime import datetime
+import inquirer
 from colorama import init, Fore, Style
 from data_store import load_excel, save_excel, MOVIES_FILE, USERS_FILE, TRANSACTIONS_FILE
 from search_filter import tampilkan_tabel_film, tampilkan_header
@@ -266,25 +267,20 @@ def lihat_dan_ubah_transaksi():
     for t in transaksi:
         table.add_row([t["booking_code"], t["username"], t["judul"], f"Rp{int(t['harga']):,}", t["status"]])
     print(table)
-    
-    while True:
-        pilihan = input("\nApakah kamu mau ubah status pembayaran pelanggan? (y/n): ").strip().lower()
-        if pilihan in ['y', 'n']:
-            break
-        tampilkan_error("Ketik 'y' untuk ya atau 'n' untuk tidak.")
-        
-    if pilihan == 'n':
+
+    pilihan_menu = []
+    for t in transaksi:
+        pilihan_menu.append(t["booking_code"] + " - " + t["username"] + " - " + t["judul"] + " (" + t["status"] + ")")
+    pilihan_menu.append("Batal")
+
+    jawaban = inquirer.prompt([
+        inquirer.List("transaksi", message="Pilih transaksi yang mau diubah statusnya", choices=pilihan_menu)
+    ])
+    if not jawaban or jawaban["transaksi"] == "Batal":
         return
-    
-    while True:
-        kode_input = input("Masukkan Kode Booking (atau 'batal'): ").strip().upper()
-        if kode_input == 'BATAL':
-            return
-        transaksi_dipilih = next((t for t in transaksi if t["booking_code"] == kode_input), None)
-        if transaksi_dipilih != None:
-            break
-        else:
-            tampilkan_error("Kode Booking tidak ditemukan. coba cek lagi tabel di atas ya.")
+
+    kode_input = jawaban["transaksi"].split(" - ")[0]
+    transaksi_dipilih = next((t for t in transaksi if t["booking_code"] == kode_input), None)
             
     while True:
         print("Pilih Status Baru: 1. Lunas | 2. Pending | 3. Batal")
