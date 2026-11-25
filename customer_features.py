@@ -3,7 +3,10 @@ from datetime import datetime
 from data_store import load_excel, save_excel, MOVIES_FILE, TRANSACTIONS_FILE
 from prettytable import PrettyTable
 import inquirer
+from visualisasi import tampilkan_error, tampilkan_peringatan, tampilkan_sukses, tampilkan_header
 from colorama import init, Fore, Style
+
+
 
 init()
 
@@ -13,13 +16,6 @@ RESET = Style.RESET_ALL
 
 HURUF_BARIS = "ABCDEFGH"
 KURSI_PER_BARIS = 4
-
-
-def tampilkan_header(judul):
-    print()
-    print("========================================")
-    print(judul.upper().center(40))
-    print("========================================")
 
 
 def buat_kode_booking(kode_lama):
@@ -57,14 +53,10 @@ def tampilkan_kursi(kapasitas, kursi_terisi):
     return kursi_kosong
 
 
-def tampilkan_error(pesan):
-    print("[!]", pesan)
-
-
 def input_kursi(kursi_terisi, kursi_kosong, pertanyaan):
     while True:
         print()
-        kursi = input(pertanyaan).strip().upper()
+        kursi = input_aman(pertanyaan).strip().upper()
         if kursi == "BATAL":
             return None
         if kursi in kursi_terisi:
@@ -95,7 +87,7 @@ def pilih_pesanan_pending(username, judul_menu, pertanyaan):
             daftar_pending.append(transaksi)
 
     if len(daftar_pending) == 0:
-        print("[!] Tidak ada pesanan berstatus Pending.")
+        tampilkan_peringatan("Tidak ada pesanan berstatus Pending.")
         return None, None
 
     tampilkan_header(judul_menu)
@@ -106,10 +98,12 @@ def pilih_pesanan_pending(username, judul_menu, pertanyaan):
         pilihan_menu.append(pesanan["booking_code"] + " - " + pesanan["judul"])
     pilihan_menu.append("Batal")
 
-    jawaban = inquirer.prompt([
-        inquirer.List("pesanan", message=pertanyaan, choices=pilihan_menu)
-    ])
-    if not jawaban or jawaban["pesanan"] == "Batal":
+    jawaban = None
+    while jawaban is None:
+        jawaban = inquirer.prompt([
+            inquirer.List("pesanan", message=pertanyaan, choices=pilihan_menu)
+        ])
+    if jawaban["pesanan"] == "Batal":
         return None, None
 
     kode_dipilih = jawaban["pesanan"].split(" - ")[0]
@@ -137,7 +131,7 @@ def make_reservation(username, pre_selected_movie_id=None):
             id_film = pre_selected_movie_id
             pre_selected_movie_id = None
         else:
-            id_film = input("Masukkan ID Film (atau 'batal'): ").strip().upper()
+            id_film = input_aman("Masukkan ID Film (atau 'batal'): ").strip().upper()
             if id_film == "BATAL":
                 return
         film = cari_film(daftar_film, id_film)
@@ -155,7 +149,7 @@ def make_reservation(username, pre_selected_movie_id=None):
         nomor = nomor + 1
 
     while True:
-        input_jadwal = input("Pilih nomor jadwal (atau 'batal'): ").strip()
+        input_jadwal = input_aman("Pilih nomor jadwal (atau 'batal'): ").strip()
         if input_jadwal.lower() == "batal":
             return
         if input_jadwal.isdigit() and 1 <= int(input_jadwal) <= len(daftar_jadwal):
@@ -172,7 +166,7 @@ def make_reservation(username, pre_selected_movie_id=None):
 
     kursi_kosong = tampilkan_kursi(int(film["kapasitas"]), kursi_terisi)
     if len(kursi_kosong) == 0:
-        tampilkan_error("Maaf, semua kursi untuk jadwal ini sudah penuh.")
+        tampilkan_peringatan("Maaf, semua kursi untuk jadwal ini sudah penuh.")
         return
 
     kursi = input_kursi(kursi_terisi, kursi_kosong,
@@ -199,7 +193,7 @@ def make_reservation(username, pre_selected_movie_id=None):
     save_excel(TRANSACTIONS_FILE, semua_transaksi)
 
     print()
-    print("[Sukses] Reservasi berhasil dibuat!")
+    tampilkan_sukses("Reservasi berhasil dibuat!")
     print("Kode Booking      :", kode_booking)
     print("Status Pembayaran : Pending (konfirmasi pembayaran ke Admin)")
 
@@ -214,7 +208,8 @@ def view_customer_history(username):
 
     tampilkan_header("Riwayat Tiket Saya")
     if len(riwayat_user) == 0:
-        print("Belum ada riwayat pemesanan tiket.")
+        tampilkan_peringatan("Belum ada riwayat pemesanan tiket.")
+        input_aman("Tekan Enter untuk kembali ke menu...")
         return
 
     tabel = PrettyTable()
@@ -226,6 +221,7 @@ def view_customer_history(username):
                        transaksi["jadwal"], transaksi["kursi"], harga,
                        transaksi["status"], transaksi["tanggal"]])
     print(tabel)
+    input_aman("Tekan Enter untuk kembali ke menu...")
 
 
 def change_seat_choice(username):
@@ -253,7 +249,7 @@ def change_seat_choice(username):
 
     pesanan["kursi"] = kursi_baru
     save_excel(TRANSACTIONS_FILE, semua_transaksi)
-    print("[Sukses] Kursi berhasil diganti menjadi", kursi_baru)
+    tampilkan_sukses("Kursi berhasil diganti menjadi " + kursi_baru)
 
 
 def cancel_reservation(username):
@@ -264,4 +260,12 @@ def cancel_reservation(username):
 
     pesanan["status"] = "Batal"
     save_excel(TRANSACTIONS_FILE, semua_transaksi)
-    print("[Sukses] Pesanan", pesanan["booking_code"], "dibatalkan.")
+    tampilkan_sukses("Pesanan " + pesanan["booking_code"] + " dibatalkan.")
+
+
+def input_aman(pertanyaan):
+    while True:
+        try:
+            return input(pertanyaan)
+        except KeyboardInterrupt:
+            print()

@@ -1,7 +1,33 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 from data_store import TRANSACTIONS_FILE
-from search_filter import tampilkan_error, tampilkan_header
+from colorama import init, Fore, Style
+
+init()
+
+MERAH = Fore.RED
+KUNING = Fore.YELLOW
+HIJAU = Fore.GREEN
+RESET = Style.RESET_ALL
+
+
+def tampilkan_header(judul):
+    print()
+    print("========================================")
+    print(judul.upper().center(40))
+    print("========================================")
+
+
+def tampilkan_error(pesan):
+    print(MERAH + "[!] " + pesan + RESET)
+
+
+def tampilkan_peringatan(pesan):
+    print(KUNING + "[!] " + pesan + RESET)
+
+
+def tampilkan_sukses(pesan):
+    print(HIJAU + "[Sukses] " + pesan + RESET)
 
 def show_sales_analysis():
     tampilkan_header("ANALISIS PENJUALAN TIKET")
@@ -10,18 +36,18 @@ def show_sales_analysis():
     except Exception:
         tampilkan_error("Gagal membaca file transaksi. Pastikan file transaksi excel ada dan bisa diakses.")
         return
-        
+
     if data_transaksi.empty:
-        tampilkan_error("Belum ada data transaksi yang bisa ditampilkan.")
+        tampilkan_peringatan("Belum ada data transaksi yang bisa ditampilkan.")
         return
-        
+
     transaksi_lunas = data_transaksi[data_transaksi["status"] == "Lunas"]
     if transaksi_lunas.empty:
-        tampilkan_error("Belum ada transaksi berstatus Lunas, jadi grafik belum bisa dibuat.")
+        tampilkan_peringatan("Belum ada transaksi berstatus Lunas, jadi grafik belum bisa dibuat.")
         return
 
     pendapatan_per_film = transaksi_lunas.groupby("judul")["harga"].sum()
-    
+
     print("\nMenampilkan grafik... (tutup jendela grafik untuk kembali ke menu)")
     plt.figure(figsize=(9, 5))
     pendapatan_per_film.plot(kind="bar", color="teal", edgecolor="black")
