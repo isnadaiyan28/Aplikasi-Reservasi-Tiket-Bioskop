@@ -8,7 +8,7 @@ from prettytable import PrettyTable
 
 def tekan_enter():
     input("\nTekan Enter untuk kembali ke menu")
-
+DAFTAR_GENRE = ["Action", "Adventure", "Comedy", "Drama", "Fantasy", "Horror", "Romance", "Animation", "Sci-Fi", "Thriller"]
 
 # untuk mengecek format jadwal yang dimasukkan admin
 def cek_jadwal(teks):
@@ -34,24 +34,17 @@ def tambah_film_baru():
     m_id = f"M{len(movies) + 1}"
 
     while True:
-        judul = input("Masukkan Judul Film: ").strip()
+        judul = input("Masukkan Judul Film: ").strip().title()
         if judul:
             break
         tampilkan_error("Judul film tidak boleh kosong ya. Coba masukkan lagi!")
 
+    print("\n Daftar Genre yang tersedia: " + ", ".join(DAFTAR_GENRE))
     while True:
-        genre = input("Masukkan Genre: ").strip()
-        ada_angka = False
-        for huruf in genre:
-            if huruf.isdigit():
-                ada_angka = True
-
-        if genre == "":
-            tampilkan_error("Genre film tidak boleh kosong ya. Coba masukkan lagi!")
-        elif ada_angka:
-            tampilkan_error("Genre tidak boleh berupa angka ya. Coba masukkan lagi!")
-        else:
+        genre = input("Masukkan Genre: ").strip().title()
+        if genre in DAFTAR_GENRE:
             break
+        tampilkan_error("Genre tidak tersedia ya. Pilih salah satu dari daftar genre di atas!")
 
     while True:
         try:
@@ -68,7 +61,7 @@ def tambah_film_baru():
             tampilkan_error("Kapasitas harus berupa angka ya. Coba masukkan lagi!")
 
     while True:
-        studio = input("Masukkan Nama Studio (Contoh: Studio 1): ").strip()
+        studio = input("Masukkan Nama Studio (Contoh: Studio 1): ").strip().title()
         if studio == "":
             tampilkan_error("Nama studio tidak boleh kosong ya. Coba masukkan lagi!")
         else:
@@ -282,15 +275,19 @@ def lihat_dan_ubah_transaksi():
 
     kode_input = jawaban["transaksi"].split(" - ")[0]
     transaksi_dipilih = next((t for t in transaksi if t["booking_code"] == kode_input), None)
-            
+
+    if transaksi_dipilih["status"] == "Batal":
+        tampilkan_peringatan("Transaksi yang sudah Batal tidak bisa diubah lagi.")
+        return
+
+    status_map = {"1": "Lunas", "2": "Batal"}
     while True:
-        print("Pilih Status Baru: 1. Lunas | 2. Pending | 3. Batal")
-        st = input("Pilihan (1-3): ").strip()
-        status_map = {"1": "Lunas", "2": "Pending", "3": "Batal"}
+        print("Pilih Status Baru: 1. Lunas | 2. Batal")
+        st = input("Pilihan (1-2): ").strip()
         if st in status_map:
             transaksi_dipilih["status"] = status_map[st]
             save_excel(TRANSACTIONS_FILE, transaksi)
             tampilkan_sukses(f"Status transaksi {kode_input} sudah diubah menjadi {status_map[st]}!")
             break
         else:
-            tampilkan_error("Pilihan status tidak valid. Masukkan angka 1 sampai 3.")
+            tampilkan_error("Pilihan status tidak valid. Masukkan angka 1 atau 2.")
